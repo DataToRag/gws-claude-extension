@@ -8,3 +8,4 @@ scripts/
 .gitignore
 node_modules/typescript
 node_modules/@types
+google-cloud-sdk/

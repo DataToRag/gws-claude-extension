@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "download-binaries": "bash scripts/download-binaries.sh"
+    "download-binaries": "bash scripts/download-binaries.sh",
+    "build:extension": "bash scripts/build-extension.sh"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1"

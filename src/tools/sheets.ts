@@ -129,7 +129,7 @@ export async function handleSheets(
   switch (toolName) {
     case "sheets_read": {
       const flags: Record<string, string> = {
-        "spreadsheet-id": args.spreadsheet_id as string,
+        spreadsheet: args.spreadsheet_id as string,
         range: args.range as string,
       };
       const result = await client.helper("sheets", "read", flags);
@@ -157,22 +157,32 @@ export async function handleSheets(
 
     case "sheets_append": {
       const flags: Record<string, string> = {
-        "spreadsheet-id": args.spreadsheet_id as string,
-        values: JSON.stringify(args.values),
+        spreadsheet: args.spreadsheet_id as string,
+        "json-values": JSON.stringify(args.values),
       };
-      if (args.range) flags.range = args.range as string;
       const result = await client.helper("sheets", "append", flags);
       return jsonResponse(result.data);
     }
 
     case "sheets_create": {
-      const flags: Record<string, string> = {
-        title: args.title as string,
+      const body: Record<string, unknown> = {
+        properties: { title: args.title },
       };
       if (args.headers) {
-        flags.headers = JSON.stringify(args.headers);
+        const headers = args.headers as string[];
+        body.sheets = [{
+          data: [{
+            rowData: [{
+              values: headers.map((h) => ({
+                userEnteredValue: { stringValue: h },
+              })),
+            }],
+          }],
+        }];
       }
-      const result = await client.helper("sheets", "create", flags);
+      const result = await client.api("sheets", "spreadsheets", "create", {
+        jsonBody: body,
+      });
       return jsonResponse(result.data);
     }
 

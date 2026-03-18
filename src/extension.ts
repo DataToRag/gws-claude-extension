@@ -1,0 +1,28 @@
+import { exec } from "node:child_process";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { createMcpServer, gwsClient } from "./create-server.js";
+
+// Start MCP server immediately so Claude Desktop doesn't time out
+const server = createMcpServer();
+const transport = new StdioServerTransport();
+await server.connect(transport);
+
+// Then check auth in background and open browser if needed
+gwsClient.authStatus().then((status) => {
+  const data = status.data as Record<string, unknown> | null;
+  if (!status.success || data?.auth_method === "none" || data?.storage === "none") {
+    const child = gwsClient.spawnAuth("drive,gmail,sheets,calendar,docs,slides,people");
+
+    // Watch stderr for the auth URL and open it in the browser
+    let stderrBuf = "";
+    child.stderr?.on("data", (chunk: Buffer) => {
+      stderrBuf += chunk.toString();
+      const match = stderrBuf.match(/(https:\/\/accounts\.google\.com\/o\/oauth2\/auth[^\s]+)/);
+      if (match) {
+        stderrBuf = "";
+        const openCmd = process.platform === "win32" ? "start" : "open";
+        exec(`${openCmd} "${match[1]}"`);
+      }
+    });
+  }
+});

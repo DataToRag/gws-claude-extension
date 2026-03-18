@@ -8,10 +8,10 @@
   },
   "server": {
     "type": "node",
-    "entry_point": "server/index.js",
+    "entry_point": "server/extension.js",
     "mcp_config": {
-      "type": "streamable-http",
-      "url": "http://localhost:37778/mcp"
+      "command": "node",
+      "args": ["${__dirname}/server/extension.js"]
     }
   },
   "tools_generated": true

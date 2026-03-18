@@ -61,6 +61,21 @@ export const docsTools = [
     annotations: { destructiveHint: true, readOnlyHint: false },
   },
   {
+    name: "docs_create",
+    description: "Create a new Google Doc.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        title: {
+          type: "string",
+          description: "Title for the new document",
+        },
+      },
+      required: ["title"],
+    },
+    annotations: { destructiveHint: true, readOnlyHint: false },
+  },
+  {
     name: "docs_delete",
     description:
       "Delete a Google Doc. This permanently removes the document from Drive.",
@@ -97,6 +112,13 @@ export async function handleDocs(
         text: args.text as string,
       };
       const result = await client.helper("docs", "write", flags);
+      return jsonResponse(result.data);
+    }
+
+    case "docs_create": {
+      const result = await client.api("docs", "documents", "create", {
+        jsonBody: { title: args.title },
+      });
       return jsonResponse(result.data);
     }
 

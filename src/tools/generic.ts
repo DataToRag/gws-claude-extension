@@ -5,7 +5,7 @@ export const genericTools = [
   {
     name: "gws_run",
     description:
-      "Run any Google Workspace API command. Use this for services not covered by dedicated tools (Calendar, Chat, Admin, etc.) or for advanced API operations. Commands follow the pattern: gws <service> <resource> <method>.",
+      "FALLBACK ONLY — use dedicated tools first (gmail_*, calendar_*, drive_*, sheets_*, docs_*, slides_*, contacts_*). Only use gws_run when no dedicated tool exists for the operation, e.g. Chat, Admin, Tasks, or advanced API calls not covered by other tools. Commands follow the pattern: gws <service> <resource> <method>.",
     inputSchema: {
       type: "object" as const,
       properties: {
