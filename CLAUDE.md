@@ -8,7 +8,7 @@ Google Workspace MCP extension for Claude. Wraps the `gws` CLI binary to expose 
 
 - `pnpm run build` — compile TypeScript (src/ → server/)
 - `pnpm run dev` — watch mode
-- `pnpm run build:extension` — compile + pack into `google-workspace.mcpb`
+- `pnpm run build:extension` — compile + pack into `google-workspace-mcp.mcpb`
 - `pnpm run download-binaries` — fetch gws binaries into bin/
 
 ## Architecture
@@ -33,7 +33,7 @@ Two entry points sharing `createMcpServer()` from `create-server.ts`:
 - `manifest.json` defines the `.mcpb` extension (entry: `server/extension.js`)
 - `.mcpbignore` excludes src/, tsconfig, dev deps, google-cloud-sdk/
 - Binaries for macOS (arm64, x64) and Windows (x64) are bundled in `bin/`
-- Pack with `mcpb pack . google-workspace.mcpb`
+- Pack with `mcpb pack . google-workspace-mcp.mcpb`
 
 ## Auth flow
 

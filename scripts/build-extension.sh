@@ -25,7 +25,7 @@ EOF
 # Pack extension with prod dependencies only
 rm -rf node_modules
 npm install --omit=dev
-mcpb pack . google-workspace.mcpb
+mcpb pack . google-workspace-mcp.mcpb
 
 # Clean up
 rm -f server/oauth.json

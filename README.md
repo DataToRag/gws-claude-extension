@@ -110,11 +110,11 @@ pnpm run build
 pnpm run build:extension
 ```
 
-This produces `google-workspace.mcpb`.
+This produces `google-workspace-mcp.mcpb`.
 
 ### 7. Install in Claude Desktop
 
-Open Claude Desktop → Settings → Extensions → Install from file → select `google-workspace.mcpb`.
+Open Claude Desktop → Settings → Extensions → Install from file → select `google-workspace-mcp.mcpb`.
 
 When the extension loads for the first time, a browser window opens automatically for Google OAuth login. Sign in and authorize the app. After that, all tools are ready to use.
 
