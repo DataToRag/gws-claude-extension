@@ -6,6 +6,25 @@ import { handleSlides } from "./slides.js";
 
 export const driveTools = [
   {
+    name: "drive_create_folder",
+    description: "Create a new folder in Google Drive.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        name: {
+          type: "string",
+          description: "Name for the new folder",
+        },
+        parent_id: {
+          type: "string",
+          description: "Parent folder ID to create inside (optional, defaults to root)",
+        },
+      },
+      required: ["name"],
+    },
+    annotations: { destructiveHint: true, readOnlyHint: false },
+  },
+  {
     name: "drive_search",
     description:
       "Search for files in Google Drive. Returns file names, IDs, types, and modification dates.",
@@ -55,6 +74,21 @@ export async function handleDrive(
   args: Record<string, unknown>
 ) {
   switch (toolName) {
+    case "drive_create_folder": {
+      const body: Record<string, unknown> = {
+        name: args.name as string,
+        mimeType: "application/vnd.google-apps.folder",
+      };
+      if (args.parent_id) {
+        body.parents = [args.parent_id as string];
+      }
+      const result = await client.api("drive", "files", "create", {
+        params: { supportsAllDrives: true, fields: "id,name,webViewLink" },
+        jsonBody: body,
+      });
+      return jsonResponse(result.data);
+    }
+
     case "drive_search": {
       const result = await client.api("drive", "files", "list", {
         params: {

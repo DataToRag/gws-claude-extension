@@ -30,7 +30,11 @@ export const genericTools = [
         },
         json_body: {
           type: "object",
-          description: "Request body for create/update operations",
+          description: "Request body for create/update operations (alias: body)",
+        },
+        body: {
+          type: "object",
+          description: "Request body for create/update operations (alias for json_body)",
         },
         page_all: {
           type: "boolean",
@@ -58,7 +62,7 @@ export async function handleGeneric(
     args.method as string,
     {
       params: args.params as Record<string, unknown> | undefined,
-      jsonBody: args.json_body,
+      jsonBody: args.json_body || args.body,
       pageAll: args.page_all as boolean | undefined,
       dryRun: args.dry_run as boolean | undefined,
     }
