@@ -1,3 +1,7 @@
+import { writeFileSync, unlinkSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { randomUUID } from "node:crypto";
 import type { GwsClient } from "../gws-client.js";
 import { jsonResponse } from "./response.js";
 
@@ -158,6 +162,36 @@ export const gmailTools = [
     },
     annotations: { destructiveHint: false, readOnlyHint: false },
   },
+  {
+    name: "gmail_save_attachment_to_drive",
+    description:
+      "Save a Gmail attachment directly to Google Drive. Use gmail_read first to get attachment metadata (filename, mimeType, attachmentId) from the message parts. The file is fetched from Gmail and uploaded to Drive server-side — no base64 data flows through the conversation. Returns the Drive file metadata including a web link.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        message_id: {
+          type: "string",
+          description: "The Gmail message ID that contains the attachment",
+        },
+        attachment_id: {
+          type: "string",
+          description:
+            "The attachment ID from the message part's body.attachmentId field",
+        },
+        filename: {
+          type: "string",
+          description: "Filename to save as in Drive (e.g., 'report.xlsx')",
+        },
+        parent_folder_id: {
+          type: "string",
+          description:
+            "Optional Drive folder ID to save into. If omitted, saves to the root of My Drive.",
+        },
+      },
+      required: ["message_id", "attachment_id", "filename"],
+    },
+    annotations: { destructiveHint: false, readOnlyHint: false },
+  },
 ];
 
 const METADATA_HEADERS = "From,To,Subject,Date";
@@ -249,6 +283,56 @@ export async function handleGmail(
         labelIds: (args.label as string) || "INBOX",
         maxResults: (args.max_results as number) || 10,
       });
+
+    case "gmail_save_attachment_to_drive": {
+      // 1. Fetch attachment data from Gmail (stays in Node.js memory)
+      const attachResult = await client.api(
+        "gmail",
+        "users.messages.attachments",
+        "get",
+        {
+          params: {
+            userId: "me",
+            messageId: args.message_id,
+            id: args.attachment_id,
+          },
+        }
+      );
+      const attachData = attachResult.data as { data?: string; size?: number };
+      if (!attachData?.data) {
+        throw new Error("No attachment data returned from Gmail API");
+      }
+
+      // 2. Decode base64url to temp file
+      const tmpFile = join(tmpdir(), `gws-attach-${randomUUID()}`);
+      try {
+        const buf = Buffer.from(attachData.data, "base64url");
+        writeFileSync(tmpFile, buf);
+
+        // 3. Upload to Drive via gws CLI helper
+        const uploadArgs = [
+          "drive",
+          "+upload",
+          tmpFile,
+          "--name",
+          args.filename as string,
+        ];
+        if (args.parent_folder_id) {
+          uploadArgs.push("--parent", args.parent_folder_id as string);
+        }
+        const uploadResult = await client.exec(uploadArgs, {
+          timeout: 120_000,
+        });
+        return jsonResponse(uploadResult.data);
+      } finally {
+        // 4. Clean up temp file
+        try {
+          unlinkSync(tmpFile);
+        } catch {
+          // ignore cleanup errors
+        }
+      }
+    }
 
     case "gmail_create_draft": {
       const headers = [
