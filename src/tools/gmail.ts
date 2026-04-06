@@ -472,8 +472,7 @@ export async function handleGmail(
       const removeLabels = args.remove_labels as string[] | undefined;
       const body: Record<string, unknown> = {};
       if (addLabels?.length) body.addLabelIds = addLabels;
-      // Default to removing UNREAD if caller provides neither
-      body.removeLabelIds = removeLabels?.length ? removeLabels : (addLabels?.length ? undefined : ["UNREAD"]);
+      body.removeLabelIds = removeLabels?.length ? removeLabels : ["UNREAD"];
       const result = await client.api("gmail", "users.messages", "modify", {
         params: { userId: "me", id: args.message_id },
         jsonBody: body,
