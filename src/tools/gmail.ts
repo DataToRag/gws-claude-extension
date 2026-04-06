@@ -1,4 +1,4 @@
-import { writeFileSync, unlinkSync } from "node:fs";
+import { writeFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
@@ -259,6 +259,28 @@ export const gmailTools = [
 
 const METADATA_HEADERS = "From,To,Subject,Date";
 
+function buildRawMessage(args: Record<string, unknown>): string {
+  const headers = [
+    `To: ${args.to as string}`,
+    `Subject: ${args.subject as string}`,
+  ];
+  if (args.cc) headers.push(`Cc: ${args.cc as string}`);
+  if (args.bcc) headers.push(`Bcc: ${args.bcc as string}`);
+  headers.push("Content-Type: text/plain; charset=utf-8");
+  return Buffer.from(
+    `${headers.join("\r\n")}\r\n\r\n${args.body as string}`
+  ).toString("base64url");
+}
+
+function draftResponse(data: unknown) {
+  const draft = data as { id?: string; message?: { id?: string; threadId?: string } };
+  const messageId = draft?.message?.id || "";
+  return jsonResponse({
+    ...draft,
+    gmail_url: `https://mail.google.com/mail/u/0/#drafts?compose=${messageId}`,
+  });
+}
+
 async function fetchMessageList(
   client: GwsClient,
   listParams: Record<string, unknown>
@@ -370,7 +392,7 @@ export async function handleGmail(
       const tmpFile = join(tmpdir(), `gws-attach-${randomUUID()}`);
       try {
         const buf = Buffer.from(attachData.data, "base64url");
-        writeFileSync(tmpFile, buf);
+        await writeFile(tmpFile, buf);
 
         // 3. Upload to Drive via gws CLI helper
         const uploadArgs = [
@@ -390,7 +412,7 @@ export async function handleGmail(
       } finally {
         // 4. Clean up temp file
         try {
-          unlinkSync(tmpFile);
+          await unlink(tmpFile);
         } catch {
           // ignore cleanup errors
         }
@@ -398,57 +420,27 @@ export async function handleGmail(
     }
 
     case "gmail_create_draft": {
-      const headers = [
-        `To: ${args.to as string}`,
-        `Subject: ${args.subject as string}`,
-      ];
-      if (args.cc) headers.push(`Cc: ${args.cc as string}`);
-      if (args.bcc) headers.push(`Bcc: ${args.bcc as string}`);
-      headers.push("Content-Type: text/plain; charset=utf-8");
-      const raw = Buffer.from(
-        `${headers.join("\r\n")}\r\n\r\n${args.body as string}`
-      )
-        .toString("base64url");
+      const raw = buildRawMessage(args);
       const result = await client.api("gmail", "users.drafts", "create", {
         params: { userId: "me" },
         jsonBody: { message: { raw } },
       });
-      const draft = result.data as {
-        id?: string;
-        message?: { id?: string };
-      };
-      const messageId = draft?.message?.id || "";
-      return jsonResponse({
-        ...draft,
-        gmail_url: `https://mail.google.com/mail/u/0/#drafts?compose=${messageId}`,
-      });
+      return draftResponse(result.data);
     }
 
     case "gmail_update_draft": {
-      // If no thread_id provided, fetch the existing draft to preserve its thread
       let threadId = args.thread_id as string | undefined;
       if (!threadId) {
         const existing = await client.api("gmail", "users.drafts", "get", {
           params: { userId: "me", id: args.draft_id, format: "metadata" },
         });
         const existingData = existing.data as {
-          message?: { threadId?: string; payload?: { headers?: { name: string; value: string }[] } };
+          message?: { threadId?: string };
         };
         threadId = existingData?.message?.threadId;
       }
 
-      const headers = [
-        `To: ${args.to as string}`,
-        `Subject: ${args.subject as string}`,
-      ];
-      if (args.cc) headers.push(`Cc: ${args.cc as string}`);
-      if (args.bcc) headers.push(`Bcc: ${args.bcc as string}`);
-      headers.push("Content-Type: text/plain; charset=utf-8");
-      const raw = Buffer.from(
-        `${headers.join("\r\n")}\r\n\r\n${args.body as string}`
-      )
-        .toString("base64url");
-
+      const raw = buildRawMessage(args);
       const message: Record<string, unknown> = { raw };
       if (threadId) message.threadId = threadId;
 
@@ -456,15 +448,7 @@ export async function handleGmail(
         params: { userId: "me", id: args.draft_id },
         jsonBody: { message },
       });
-      const draft = result.data as {
-        id?: string;
-        message?: { id?: string; threadId?: string };
-      };
-      const messageId = draft?.message?.id || "";
-      return jsonResponse({
-        ...draft,
-        gmail_url: `https://mail.google.com/mail/u/0/#drafts?compose=${messageId}`,
-      });
+      return draftResponse(result.data);
     }
 
     case "gmail_mark_read": {

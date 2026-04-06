@@ -1,8 +1,7 @@
 import { spawn } from "node:child_process";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { createMcpServer, gwsClient } from "./create-server.js";
-
-const EXPECTED_SERVICES = "drive,gmail,sheets,calendar,docs,slides,people,tasks";
+import { DEFAULT_SERVICES } from "./gws-client.js";
 
 // Scopes that must be present — if any are missing, re-auth is triggered.
 // Uses substrings to match regardless of full URL vs short form.
@@ -40,7 +39,7 @@ async function triggerReAuth(reason: string) {
   // Clear old credentials first to guarantee a fresh token with all scopes
   await gwsClient.logout();
 
-  const child = gwsClient.spawnAuth(EXPECTED_SERVICES);
+  const child = gwsClient.spawnAuth(DEFAULT_SERVICES);
 
   let stderrBuf = "";
   child.stderr?.on("data", (chunk: Buffer) => {

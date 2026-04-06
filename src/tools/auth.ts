@@ -1,3 +1,4 @@
+import { DEFAULT_SERVICES } from "../gws-client.js";
 import type { GwsClient } from "../gws-client.js";
 
 export const authTools = [
@@ -25,8 +26,6 @@ export const authTools = [
     annotations: { destructiveHint: false, readOnlyHint: true },
   },
 ];
-
-const DEFAULT_SERVICES = "drive,gmail,sheets,calendar,docs,slides,people,tasks";
 
 export async function handleAuth(
   client: GwsClient,

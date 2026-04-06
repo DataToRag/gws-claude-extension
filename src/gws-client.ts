@@ -8,6 +8,8 @@ import { fileURLToPath } from "node:url";
 const execFileAsync = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+export const DEFAULT_SERVICES = "drive,gmail,sheets,calendar,docs,slides,people,tasks";
+
 let _bundledOAuth: { clientId?: string; clientSecret?: string } | undefined;
 function loadBundledOAuth(): { clientId?: string; clientSecret?: string } {
   if (!_bundledOAuth) {
