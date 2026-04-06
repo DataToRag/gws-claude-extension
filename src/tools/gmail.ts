@@ -198,6 +198,34 @@ export const gmailTools = [
     annotations: { destructiveHint: true, readOnlyHint: false },
   },
   {
+    name: "gmail_mark_read",
+    description:
+      "Mark a Gmail message as read by removing the UNREAD label. Can also add or remove other labels. Calls the Gmail API users.messages.modify endpoint.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        message_id: {
+          type: "string",
+          description: "The Gmail message ID to modify",
+        },
+        add_labels: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            'Label IDs to add (e.g., ["STARRED", "IMPORTANT"]). Optional.',
+        },
+        remove_labels: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            'Label IDs to remove (e.g., ["UNREAD", "INBOX"]). Defaults to ["UNREAD"] if neither add_labels nor remove_labels is provided.',
+        },
+      },
+      required: ["message_id"],
+    },
+    annotations: { destructiveHint: true, readOnlyHint: false },
+  },
+  {
     name: "gmail_save_attachment_to_drive",
     description:
       "Save a Gmail attachment directly to Google Drive. Use gmail_read first to get attachment metadata (filename, mimeType, attachmentId) from the message parts. The file is fetched from Gmail and uploaded to Drive server-side — no base64 data flows through the conversation. Returns the Drive file metadata including a web link.",
@@ -437,6 +465,20 @@ export async function handleGmail(
         ...draft,
         gmail_url: `https://mail.google.com/mail/u/0/#drafts?compose=${messageId}`,
       });
+    }
+
+    case "gmail_mark_read": {
+      const addLabels = args.add_labels as string[] | undefined;
+      const removeLabels = args.remove_labels as string[] | undefined;
+      const body: Record<string, unknown> = {};
+      if (addLabels?.length) body.addLabelIds = addLabels;
+      // Default to removing UNREAD if caller provides neither
+      body.removeLabelIds = removeLabels?.length ? removeLabels : (addLabels?.length ? undefined : ["UNREAD"]);
+      const result = await client.api("gmail", "users.messages", "modify", {
+        params: { userId: "me", id: args.message_id },
+        jsonBody: body,
+      });
+      return jsonResponse(result.data);
     }
 
     default:
