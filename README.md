@@ -6,7 +6,7 @@ A [Model Context Protocol](https://modelcontextprotocol.io/) server that gives C
 
 | Service | Tools | Operations |
 |---------|-------|------------|
-| **Gmail** | 11 | send, reply, forward, triage, read, search, list, create draft, update draft, mark read, save attachment to Drive |
+| **Gmail** | 10 | send, reply, forward, read, search, list, create draft, update draft, mark read, save attachment to Drive |
 | **Calendar** | 6 | list events, get event, create, update, delete, freebusy |
 | **Contacts** | 7 | search, get, list, create, update, delete, directory search |
 | **Drive** | 3 | search, read file, create folder |
@@ -17,7 +17,7 @@ A [Model Context Protocol](https://modelcontextprotocol.io/) server that gives C
 | **Generic** | 1 | `gws_run` — fallback for any GWS API not covered above |
 | **Auth** | 1 | OAuth login and status |
 
-**49 tools total.** All tools support shared (team) Drives.
+**48 tools total.** All tools support shared (team) Drives.
 
 ### Key tool details
 

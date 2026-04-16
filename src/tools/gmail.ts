@@ -68,17 +68,6 @@ export const gmailTools = [
     annotations: { destructiveHint: true, readOnlyHint: false },
   },
   {
-    name: "gmail_triage",
-    description:
-      "Get an overview of recent unread emails in the Gmail inbox for triage.",
-    inputSchema: {
-      type: "object" as const,
-      properties: {},
-      required: [] as string[],
-    },
-    annotations: { destructiveHint: false, readOnlyHint: true },
-  },
-  {
     name: "gmail_read",
     description:
       "Read a specific email message by its ID. Returns the full message including headers, body, and metadata.",
@@ -338,11 +327,6 @@ export async function handleGmail(
         "message-id": args.message_id as string,
         to: args.to as string,
       });
-      return jsonResponse(result.data);
-    }
-
-    case "gmail_triage": {
-      const result = await client.helper("gmail", "triage", {});
       return jsonResponse(result.data);
     }
 
